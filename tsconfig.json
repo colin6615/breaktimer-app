@@ -9,7 +9,7 @@
     },
     "jsx": "react-jsx",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "noUnusedLocals": true,
     "pretty": true,
     "sourceMap": true,
