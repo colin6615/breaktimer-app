@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "commonjs",
+    "module": "nodenext",
     "lib": ["es2020"],
     "allowJs": true,
     "outDir": "./dist",
     "rootDir": "./",
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "baseUrl": ".",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -20,7 +20,8 @@
   "include": ["app/main/**/*"],
   "ts-node": {
     "compilerOptions": {
-      "module": "commonjs"
+      "module": "nodenext",
+      "moduleResolution": "nodenext"
     }
   }
 }
