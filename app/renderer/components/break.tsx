@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Settings, SoundType } from "../../types/settings";
 import { BreakNotification } from "./break/break-notification";
 import { BreakProgress } from "./break/break-progress";
+import { isPrimaryBreakWindow } from "./break/break-window";
 import { createDarkerRgba } from "./break/utils";
 
 export default function Break() {
@@ -59,8 +60,12 @@ export default function Break() {
     setTimeout(init, 1000);
   }, []);
 
-  const handleCountdownOver = useCallback(() => {
-    setCountingDown(false);
+  const handleCountdownOver = useCallback(async () => {
+    // Every display has a break window. Start tracking once, then rely on the
+    // main process to broadcast the shared break timeline to every window.
+    if (isPrimaryBreakWindow(window.location.search)) {
+      await ipcRenderer.invokeBreakStart();
+    }
   }, []);
 
   const handleStartBreakNow = useCallback(async () => {
