@@ -266,7 +266,7 @@ export function buildTray(): void {
     },
     {
       label: "Start break now",
-      visible: breakTime !== null && inWorkingHours && !havingBreak,
+      visible: !havingBreak,
       click: () => {
         log.info("Start break now selected");
         startBreakNow();

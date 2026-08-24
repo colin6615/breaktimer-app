@@ -24,4 +24,7 @@ export default defineConfig({
     port: 1212,
     host: "localhost",
   },
+  test: {
+    include: ["**/*.test.ts", "../main/lib/**/*.test.ts"],
+  },
 });

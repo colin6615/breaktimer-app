@@ -342,6 +342,7 @@ function checkBreak(): void {
 export function startBreakNow(): void {
   startedFromTray = true;
   breakTime = moment();
+  doBreak();
 }
 
 export function wasStartedFromTray(): boolean {
