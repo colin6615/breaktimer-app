@@ -24,7 +24,9 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-let powerMonitor: PowerMonitor;
+type SystemIdleMonitor = Pick<PowerMonitor, "getSystemIdleState">;
+
+let powerMonitor: SystemIdleMonitor;
 let breakTime: BreakTime = null;
 let havingBreak = false;
 let postponedCount = 0;
@@ -373,18 +375,23 @@ function tick(): void {
     const breakSeconds = getBreakSeconds();
     const lockSeconds = lockStart && Math.abs(+new Date() - +lockStart) / 1000;
 
-    if (lockStart && lockSeconds !== null && lockSeconds > breakSeconds) {
-      // The computer has been locked for longer than the break period. In this
-      // case, it's not particularly helpful to show an idle reset
-      // notification, so unset idle start
-      idleStart = null;
-      lockStart = null;
-    } else if (secondsSinceLastTick > breakSeconds) {
+    if (secondsSinceLastTick > breakSeconds) {
       // The computer has been slept for longer than the break period. In this
       // case, it's not particularly helpful to show an idle reset
       // notification, so just reset the break
       lockStart = null;
       breakTime = null;
+      resetTimeSinceLastBreak("Break auto-detected via system suspension");
+    } else if (
+      lockStart &&
+      lockSeconds !== null &&
+      lockSeconds > breakSeconds
+    ) {
+      // The computer has been locked for longer than the break period. In this
+      // case, it's not particularly helpful to show an idle reset
+      // notification, so unset idle start
+      idleStart = null;
+      lockStart = null;
     } else if (secondsSinceLastTick > getIdleResetSeconds()) {
       //  If idleStart exists, it means we were idle before the computer slept.
       //  If it doesn't exist, count the computer going unresponsive as the
@@ -422,8 +429,8 @@ function tick(): void {
 
 let tickInterval: NodeJS.Timeout;
 
-export function initBreaks(): void {
-  powerMonitor = require("electron").powerMonitor;
+export function initBreaks(systemIdleMonitor?: SystemIdleMonitor): void {
+  powerMonitor = systemIdleMonitor ?? require("electron").powerMonitor;
 
   const settings: Settings = getSettings();
 

@@ -1,5 +1,6 @@
+import type { PowerMonitor } from "electron";
 import moment from "moment";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   defaultSettings,
   NotificationType,
@@ -9,6 +10,8 @@ import {
 const harness = vi.hoisted(() => ({
   buildTray: vi.fn(),
   createBreakWindows: vi.fn(),
+  getSystemIdleState: vi.fn<PowerMonitor["getSystemIdleState"]>(() => "active"),
+  powerMonitor: {} as Pick<PowerMonitor, "getSystemIdleState">,
   settings: {} as Settings,
 }));
 
@@ -43,5 +46,52 @@ describe("manual breaks", () => {
     expect(
       Math.abs(breaks.getBreakTime()?.diff(moment()) ?? Infinity),
     ).toBeLessThan(1000);
+  });
+});
+
+describe("system suspension", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-24T09:00:00Z"));
+    vi.resetModules();
+    vi.clearAllMocks();
+    harness.getSystemIdleState.mockReturnValue("active");
+    harness.powerMonitor = {
+      getSystemIdleState: harness.getSystemIdleState,
+    };
+    harness.settings = {
+      ...defaultSettings,
+      breakFrequencySeconds: 60,
+      idleResetLengthSeconds: 5,
+      workingHoursEnabled: false,
+    };
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("does not count a long suspension as active time", async () => {
+    const breaks = await import("./breaks.js");
+    breaks.initBreaks(harness.powerMonitor);
+    vi.advanceTimersByTime(1000);
+
+    vi.setSystemTime(new Date("2026-08-24T09:02:00Z"));
+    vi.advanceTimersByTime(1000);
+
+    expect(breaks.getTimeSinceLastCompletedBreak()).toBe(0);
+    expect(breaks.getBreakTime()?.diff(moment(), "seconds")).toBe(60);
+  });
+
+  it("detects suspension even if the machine was already locked", async () => {
+    harness.getSystemIdleState.mockReturnValue("locked");
+    const breaks = await import("./breaks.js");
+    breaks.initBreaks(harness.powerMonitor);
+    vi.advanceTimersByTime(1000);
+
+    vi.setSystemTime(new Date("2026-08-24T09:02:00Z"));
+    vi.advanceTimersByTime(1000);
+
+    expect(breaks.getTimeSinceLastCompletedBreak()).toBe(0);
   });
 });
