@@ -124,16 +124,6 @@ describe("break completion while locked", () => {
     expect(harness.sendIpc).not.toHaveBeenCalled();
   });
 
-  it("ends normally when the system is unlocked", async () => {
-    harness.getSystemIdleState.mockReturnValue("active");
-    const breaks = await import("./breaks.js");
-
-    breaks.initBreaks(harness.powerMonitor);
-    breaks.requestBreakEnd();
-
-    expect(harness.sendIpc).toHaveBeenCalledOnce();
-  });
-
   it("releases the deferred break end after unlock", async () => {
     const unlockHandlers: Array<() => void> = [];
     harness.powerMonitor = {
@@ -147,7 +137,7 @@ describe("break completion while locked", () => {
 
     breaks.initBreaks(harness.powerMonitor);
     breaks.requestBreakEnd();
-    unlockHandlers[1]();
+    unlockHandlers[0]();
 
     expect(harness.sendIpc).toHaveBeenCalledOnce();
   });

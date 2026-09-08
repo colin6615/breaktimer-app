@@ -40,7 +40,6 @@ let startedFromTray = false;
 let lastCompletedBreakTime: Date | null = new Date();
 let currentBreakStartTime: Date | null = null;
 let breakEndPending = false;
-let systemLocked = false;
 
 export function getBreakTime(): BreakTime {
   return breakTime;
@@ -355,8 +354,12 @@ export function wasStartedFromTray(): boolean {
   return startedFromTray;
 }
 
+function isSystemLocked(): boolean {
+  return powerMonitor?.getSystemIdleState(0) === IdleState.Locked;
+}
+
 export function requestBreakEnd(): void {
-  if (systemLocked) {
+  if (isSystemLocked()) {
     breakEndPending = true;
     log.info("Break end deferred until system unlock");
     return;
@@ -365,13 +368,7 @@ export function requestBreakEnd(): void {
   sendIpc(IpcChannel.BreakEnd);
 }
 
-function handleLockScreen(): void {
-  systemLocked = true;
-}
-
 function releaseDeferredBreakEnd(): void {
-  systemLocked = false;
-
   if (!breakEndPending) return;
 
   breakEndPending = false;
@@ -460,10 +457,7 @@ let tickInterval: NodeJS.Timeout;
 export function initBreaks(systemIdleMonitor?: SystemIdleMonitor): void {
   powerMonitor = systemIdleMonitor ?? require("electron").powerMonitor;
   breakEndPending = false;
-  systemLocked =
-    powerMonitor.getSystemIdleState(getIdleResetSeconds()) === IdleState.Locked;
 
-  powerMonitor.on?.("lock-screen", handleLockScreen);
   powerMonitor.on?.("unlock-screen", releaseDeferredBreakEnd);
 
   const settings: Settings = getSettings();
