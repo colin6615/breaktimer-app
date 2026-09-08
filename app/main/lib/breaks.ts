@@ -41,6 +41,8 @@ let lastCompletedBreakTime: Date | null = new Date();
 let currentBreakStartTime: Date | null = null;
 let breakEndPending = false;
 let systemLocked = false;
+let breakStartedAfterSuspension = false;
+let scheduledBreakEndTime: number | null = null;
 
 export function getBreakTime(): BreakTime {
   return breakTime;
@@ -183,6 +185,8 @@ export function endPopupBreak(): void {
   }
 
   log.info("Break ended");
+  breakStartedAfterSuspension = false;
+  scheduledBreakEndTime = null;
   const existingBreakTime = breakTime;
   const now = moment();
   havingBreak = false;
@@ -351,6 +355,16 @@ export function startBreakNow(): void {
   doBreak();
 }
 
+export function getBreakStartInfo(): {
+  startImmediately: boolean;
+  breakEndTime: number | null;
+} {
+  return {
+    startImmediately: breakStartedAfterSuspension,
+    breakEndTime: scheduledBreakEndTime,
+  };
+}
+
 export function wasStartedFromTray(): boolean {
   return startedFromTray;
 }
@@ -403,10 +417,24 @@ function tick(): void {
     const breakSeconds = getBreakSeconds();
     const lockSeconds = lockStart && Math.abs(+new Date() - +lockStart) / 1000;
 
+    if (
+      !havingBreak &&
+      !systemLocked &&
+      breakTime !== null &&
+      breakTime <= now &&
+      settings.breaksEnabled &&
+      inWorkingHours
+    ) {
+      breakStartedAfterSuspension = secondsSinceLastTick > 2000;
+      scheduledBreakEndTime =
+        breakTime.valueOf() + settings.breakLengthSeconds * 1000;
+      doBreak();
+      return;
+    }
+
     if (secondsSinceLastTick > breakSeconds) {
-      // The computer has been slept for longer than the break period. In this
-      // case, it's not particularly helpful to show an idle reset
-      // notification, so just reset the break
+      // The computer has been suspended long enough to invalidate the active
+      // work interval, but no scheduled break was missed.
       lockStart = null;
       breakTime = null;
       resetTimeSinceLastBreak("Break auto-detected via system suspension");
@@ -439,11 +467,6 @@ function tick(): void {
       }
       breakTime = null;
       buildTray();
-      return;
-    }
-
-    if (shouldHaveBreak && !breakTime) {
-      scheduleNextBreak();
       return;
     }
 
