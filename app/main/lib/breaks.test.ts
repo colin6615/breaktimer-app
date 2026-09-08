@@ -7,17 +7,22 @@ import {
   Settings,
 } from "../../types/settings";
 
+type TestPowerMonitor = Pick<PowerMonitor, "getSystemIdleState"> & {
+  on?: PowerMonitor["on"];
+};
+
 const harness = vi.hoisted(() => ({
   buildTray: vi.fn(),
   createBreakWindows: vi.fn(),
   getSystemIdleState: vi.fn<PowerMonitor["getSystemIdleState"]>(() => "active"),
-  powerMonitor: {} as Pick<PowerMonitor, "getSystemIdleState">,
+  powerMonitor: {} as TestPowerMonitor,
   settings: {} as Settings,
+  sendIpc: vi.fn(),
 }));
 
 vi.mock("electron", () => ({}));
 vi.mock("electron-log", () => ({ default: { info: vi.fn() } }));
-vi.mock("./ipc", () => ({ sendIpc: vi.fn() }));
+vi.mock("./ipc", () => ({ sendIpc: harness.sendIpc }));
 vi.mock("./notifications", () => ({ showNotification: vi.fn() }));
 vi.mock("./store", () => ({ getSettings: () => harness.settings }));
 vi.mock("./tray", () => ({ buildTray: harness.buildTray }));
@@ -93,5 +98,47 @@ describe("system suspension", () => {
     vi.advanceTimersByTime(1000);
 
     expect(breaks.getTimeSinceLastCompletedBreak()).toBe(0);
+  });
+});
+
+describe("break completion while locked", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+    harness.settings = {
+      ...defaultSettings,
+      notificationType: NotificationType.Popup,
+    };
+    harness.getSystemIdleState.mockReturnValue("locked");
+    harness.powerMonitor = {
+      getSystemIdleState: harness.getSystemIdleState,
+    };
+  });
+
+  it("defers the break end until the system unlocks", async () => {
+    const breaks = await import("./breaks.js");
+
+    breaks.initBreaks(harness.powerMonitor);
+    breaks.requestBreakEnd();
+
+    expect(harness.sendIpc).not.toHaveBeenCalled();
+  });
+
+  it("releases the deferred break end after unlock", async () => {
+    const unlockHandlers: Array<() => void> = [];
+    harness.powerMonitor = {
+      getSystemIdleState: harness.getSystemIdleState,
+      on: vi.fn((_event: string, handler: () => void) => {
+        unlockHandlers.push(handler);
+        return harness.powerMonitor as never;
+      }),
+    };
+    const breaks = await import("./breaks.js");
+
+    breaks.initBreaks(harness.powerMonitor);
+    breaks.requestBreakEnd();
+    unlockHandlers[0]();
+
+    expect(harness.sendIpc).toHaveBeenCalledOnce();
   });
 });

@@ -8,6 +8,7 @@ import {
   getBreakLengthSeconds,
   getTimeSinceLastBreak,
   postponeBreak,
+  requestBreakEnd,
   startBreakTracking,
   wasStartedFromTray,
 } from "./breaks";
@@ -58,7 +59,7 @@ ipcMain.handle(IpcChannel.BreakStart, (): void => {
 
 ipcMain.handle(IpcChannel.BreakEnd, (): void => {
   log.info(IpcChannel.BreakEnd);
-  sendIpc(IpcChannel.BreakEnd);
+  requestBreakEnd();
 });
 
 ipcMain.handle(
