@@ -6,7 +6,6 @@ import {
   completeBreakTracking,
   getAllowPostpone,
   getBreakLengthSeconds,
-  getBreakStartInfo,
   getTimeSinceLastBreak,
   postponeBreak,
   requestBreakEnd,
@@ -54,8 +53,7 @@ ipcMain.handle(IpcChannel.BreakStart, (): void => {
   startBreakTracking();
   // Send break end time so all windows sync their progress to the same timeline
   const breakLengthMs = getBreakLengthSeconds() * 1000;
-  const breakEndTime =
-    getBreakStartInfo().breakEndTime ?? Date.now() + breakLengthMs;
+  const breakEndTime = Date.now() + breakLengthMs;
   sendIpc(IpcChannel.BreakStart, breakEndTime);
 });
 
@@ -95,11 +93,6 @@ ipcMain.handle(
 ipcMain.handle(IpcChannel.BreakLengthGet, (): number => {
   log.info(IpcChannel.BreakLengthGet);
   return getBreakLengthSeconds();
-});
-
-ipcMain.handle(IpcChannel.BreakStartInfoGet, () => {
-  log.info(IpcChannel.BreakStartInfoGet);
-  return getBreakStartInfo();
 });
 
 ipcMain.handle(

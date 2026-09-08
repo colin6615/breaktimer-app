@@ -2,10 +2,6 @@ declare const ipcRenderer: {
   invokeBreakPostpone: (action: string) => Promise<void>;
   invokeGetAllowPostpone: () => Promise<boolean>;
   invokeGetBreakLength: () => Promise<number>;
-  invokeGetBreakStartInfo: () => Promise<{
-    startImmediately: boolean;
-    breakEndTime: number | null;
-  }>;
   invokeGetSettings: () => Promise<unknown>;
   invokeEndSound: (type: string, volume?: number) => Promise<unknown>;
   invokeStartSound: (type: string, volume?: number) => Promise<unknown>;

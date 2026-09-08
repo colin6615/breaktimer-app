@@ -66,8 +66,7 @@ describe("system suspension", () => {
     };
     harness.settings = {
       ...defaultSettings,
-      breakFrequencySeconds: 15,
-      breakLengthSeconds: 15 * 60,
+      breakFrequencySeconds: 60,
       idleResetLengthSeconds: 5,
       workingHoursEnabled: false,
     };
@@ -77,38 +76,16 @@ describe("system suspension", () => {
     vi.useRealTimers();
   });
 
-  it("starts a break when the scheduled break becomes due during suspension", async () => {
+  it("does not count a long suspension as active time", async () => {
     const breaks = await import("./breaks.js");
     breaks.initBreaks(harness.powerMonitor);
     vi.advanceTimersByTime(1000);
 
-    vi.setSystemTime(new Date("2026-08-24T09:00:30Z"));
+    vi.setSystemTime(new Date("2026-08-24T09:02:00Z"));
     vi.advanceTimersByTime(1000);
 
-    expect(harness.createBreakWindows).toHaveBeenCalledOnce();
-    expect(breaks.isHavingBreak()).toBe(true);
-    expect(breaks.getBreakStartInfo()).toEqual({
-      startImmediately: true,
-      breakEndTime: new Date("2026-08-24T09:15:15Z").getTime(),
-    });
-  });
-
-  it("keeps the remaining break time after a 90-second suspension", async () => {
-    harness.settings.breakFrequencySeconds = 60;
-    harness.settings.breakLengthSeconds = 60;
-    const breaks = await import("./breaks.js");
-
-    breaks.initBreaks(harness.powerMonitor);
-    vi.advanceTimersByTime(1000);
-
-    vi.setSystemTime(new Date("2026-08-24T09:01:30Z"));
-    vi.advanceTimersByTime(1000);
-
-    expect(harness.createBreakWindows).toHaveBeenCalledOnce();
-    expect(breaks.getBreakStartInfo()).toEqual({
-      startImmediately: true,
-      breakEndTime: new Date("2026-08-24T09:02:00Z").getTime(),
-    });
+    expect(breaks.getTimeSinceLastCompletedBreak()).toBe(0);
+    expect(breaks.getBreakTime()?.diff(moment(), "seconds")).toBe(60);
   });
 
   it("detects suspension even if the machine was already locked", async () => {

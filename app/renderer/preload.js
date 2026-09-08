@@ -4,7 +4,6 @@
  *
  * See https://www.electronjs.org/docs/tutorial/context-isolation for more
  * information.
- * test
  */
 
 const { contextBridge, ipcRenderer } = require("electron");
@@ -21,9 +20,6 @@ process.once("loaded", () => {
     },
     invokeGetBreakLength: () => {
       return ipcRenderer.invoke("BREAK_LENGTH_GET");
-    },
-    invokeGetBreakStartInfo: () => {
-      return ipcRenderer.invoke("BREAK_START_INFO_GET");
     },
     invokeGetSettings: () => {
       return ipcRenderer.invoke("SETTINGS_GET");
