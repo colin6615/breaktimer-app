@@ -120,7 +120,7 @@ export function createBreakWindows(): void {
       width: notificationWidth,
       height: notificationHeight,
       resizable: false,
-      focusable: false,
+      focusable: true,
       transparent: true,
       hasShadow: false,
       webPreferences: {

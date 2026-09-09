@@ -24,7 +24,7 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-type SystemIdleMonitor = Pick<PowerMonitor, "getSystemIdleState">;
+type SystemIdleMonitor = Pick<PowerMonitor, "getSystemIdleState" | "on">;
 
 let powerMonitor: SystemIdleMonitor;
 let breakTime: BreakTime = null;
@@ -32,6 +32,7 @@ let havingBreak = false;
 let postponedCount = 0;
 let idleStart: Date | null = null;
 let lockStart: Date | null = null;
+let lockTimestamp: number | null = null;
 let lastTick: Date | null = null;
 let startedFromTray = false;
 
@@ -170,6 +171,13 @@ export function scheduleNextBreak(isPostpone = false): void {
   );
 
   buildTray();
+}
+
+function resetAfterLongAbsence(): void {
+  breakTime = null;
+  postponedCount = 0;
+  resetTimeSinceLastBreak("Reset time since last break [long lock]");
+  scheduleNextBreak();
 }
 
 export function endPopupBreak(): void {
@@ -428,9 +436,34 @@ function tick(): void {
 }
 
 let tickInterval: NodeJS.Timeout;
+let powerMonitorListenersRegistered = false;
 
 export function initBreaks(systemIdleMonitor?: SystemIdleMonitor): void {
   powerMonitor = systemIdleMonitor ?? require("electron").powerMonitor;
+
+  if (!powerMonitorListenersRegistered) {
+    powerMonitor.on("lock-screen", () => {
+      lockTimestamp = Date.now();
+      console.log(
+        `[${new Date(lockTimestamp).toISOString()}] lockTimestamp updated: ${lockTimestamp}`,
+      );
+    });
+    powerMonitor.on("unlock-screen", () => {
+      if (lockTimestamp === null) return;
+
+      const awayDuration = Date.now() - lockTimestamp;
+      console.log(
+        `[${new Date().toISOString()}] awayDuration updated: ${awayDuration}ms`,
+      );
+      lockTimestamp = null;
+      console.log(`[${new Date().toISOString()}] lockTimestamp updated: null`);
+
+      if (awayDuration >= getBreakLengthSeconds() * 1000) {
+        resetAfterLongAbsence();
+      }
+    });
+    powerMonitorListenersRegistered = true;
+  }
 
   const settings: Settings = getSettings();
 

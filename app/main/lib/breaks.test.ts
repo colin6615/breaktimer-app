@@ -11,7 +11,9 @@ const harness = vi.hoisted(() => ({
   buildTray: vi.fn(),
   createBreakWindows: vi.fn(),
   getSystemIdleState: vi.fn<PowerMonitor["getSystemIdleState"]>(() => "active"),
-  powerMonitor: {} as Pick<PowerMonitor, "getSystemIdleState">,
+  on: vi.fn(),
+  listeners: {} as Record<string, () => void>,
+  powerMonitor: {} as Pick<PowerMonitor, "getSystemIdleState" | "on">,
   settings: {} as Settings,
 }));
 
@@ -56,8 +58,14 @@ describe("system suspension", () => {
     vi.resetModules();
     vi.clearAllMocks();
     harness.getSystemIdleState.mockReturnValue("active");
+    harness.listeners = {};
+    harness.on.mockImplementation((event, listener) => {
+      harness.listeners[event] = listener;
+      return harness.powerMonitor;
+    });
     harness.powerMonitor = {
       getSystemIdleState: harness.getSystemIdleState,
+      on: harness.on,
     };
     harness.settings = {
       ...defaultSettings,
@@ -93,5 +101,41 @@ describe("system suspension", () => {
     vi.advanceTimersByTime(1000);
 
     expect(breaks.getTimeSinceLastCompletedBreak()).toBe(0);
+  });
+
+  it("does not reset when unlocked before a full break", async () => {
+    harness.settings.breakLengthSeconds = 10;
+    const breaks = await import("./breaks.js");
+    breaks.initBreaks(harness.powerMonitor);
+    const initialBreakTime = breaks.getBreakTime();
+
+    harness.listeners["lock-screen"]();
+    vi.advanceTimersByTime(9999);
+    harness.listeners["unlock-screen"]();
+
+    expect(breaks.getBreakTime()).toBe(initialBreakTime);
+  });
+
+  it("resets when unlocked at the full break length", async () => {
+    harness.settings.breakLengthSeconds = 10;
+    const breaks = await import("./breaks.js");
+    breaks.initBreaks(harness.powerMonitor);
+    const initialBreakTime = breaks.getBreakTime();
+
+    harness.listeners["lock-screen"]();
+    vi.advanceTimersByTime(10000);
+    harness.listeners["unlock-screen"]();
+
+    expect(breaks.getBreakTime()).not.toBe(initialBreakTime);
+    expect(breaks.getBreakTime()?.diff(moment(), "seconds")).toBe(60);
+  });
+
+  it("registers lock listeners only once", async () => {
+    const breaks = await import("./breaks.js");
+
+    breaks.initBreaks(harness.powerMonitor);
+    breaks.initBreaks(harness.powerMonitor);
+
+    expect(harness.on).toHaveBeenCalledTimes(2);
   });
 });
