@@ -32,6 +32,7 @@ let havingBreak = false;
 let postponedCount = 0;
 let idleStart: Date | null = null;
 let lockStart: Date | null = null;
+let breakReachedWhileLocked = false;
 let lastTick: Date | null = null;
 let startedFromTray = false;
 
@@ -365,6 +366,25 @@ function tick(): void {
     }
 
     const shouldHaveBreak = checkShouldHaveBreak();
+
+    if (
+      !shouldHaveBreak &&
+      !havingBreak &&
+      lockStart &&
+      breakTime &&
+      now >= breakTime
+    ) {
+      breakReachedWhileLocked = true;
+      breakTime = null;
+      buildTray();
+    }
+
+    if (shouldHaveBreak && breakReachedWhileLocked) {
+      breakReachedWhileLocked = false;
+      resetTimeSinceLastBreak("Break reached while computer was locked");
+      scheduleNextBreak();
+      return;
+    }
 
     // This can happen if the computer is put to sleep. In this case, we want
     // to skip the break if the time the computer was unresponsive was greater

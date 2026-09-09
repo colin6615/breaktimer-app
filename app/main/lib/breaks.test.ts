@@ -94,4 +94,21 @@ describe("system suspension", () => {
 
     expect(breaks.getTimeSinceLastCompletedBreak()).toBe(0);
   });
+
+  it("resets the work timer when a break becomes due while locked", async () => {
+    harness.settings.breakFrequencySeconds = 120;
+    const breaks = await import("./breaks.js");
+    breaks.initBreaks(harness.powerMonitor);
+    vi.advanceTimersByTime(1000);
+
+    harness.getSystemIdleState.mockReturnValue("locked");
+    vi.advanceTimersByTime(121000);
+
+    harness.getSystemIdleState.mockReturnValue("active");
+    vi.advanceTimersByTime(1000);
+
+    expect(breaks.getTimeSinceLastCompletedBreak()).toBe(0);
+    expect(breaks.getBreakTime()?.diff(moment(), "seconds")).toBe(120);
+    expect(harness.createBreakWindows).not.toHaveBeenCalled();
+  });
 });
