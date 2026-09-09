@@ -21,20 +21,26 @@ export default function Break() {
 
   useEffect(() => {
     const init = async () => {
-      const [allowPostpone, settings, timeSince, startedFromTray] =
+      const [allowPostpone, settings, timeSince, startedFromTray, breakState] =
         await Promise.all([
           ipcRenderer.invokeGetAllowPostpone(),
           ipcRenderer.invokeGetSettings() as Promise<Settings>,
           ipcRenderer.invokeGetTimeSinceLastBreak(),
           ipcRenderer.invokeWasStartedFromTray(),
+          ipcRenderer.invokeGetBreakState(),
         ]);
 
       setAllowPostpone(allowPostpone);
       setSettings(settings);
       setTimeSinceLastBreak(timeSince);
+      setSharedBreakEndTime(breakState.breakEndTime);
 
       // Skip the countdown if immediately start breaks is enabled or started from tray
-      if (settings.immediatelyStartBreaks || startedFromTray) {
+      if (
+        settings.immediatelyStartBreaks ||
+        startedFromTray ||
+        breakState.havingBreak
+      ) {
         setCountingDown(false);
       }
 

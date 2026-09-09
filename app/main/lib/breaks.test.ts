@@ -95,7 +95,7 @@ describe("system suspension", () => {
     expect(breaks.getTimeSinceLastCompletedBreak()).toBe(0);
   });
 
-  it("resets the work timer when a break becomes due while locked", async () => {
+  it("starts a due break after unlock using its original deadline", async () => {
     harness.settings.breakFrequencySeconds = 120;
     const breaks = await import("./breaks.js");
     breaks.initBreaks(harness.powerMonitor);
@@ -107,6 +107,31 @@ describe("system suspension", () => {
     harness.getSystemIdleState.mockReturnValue("active");
     vi.advanceTimersByTime(1000);
 
+    expect(breaks.isHavingBreak()).toBe(true);
+    expect(harness.createBreakWindows).toHaveBeenCalledOnce();
+    expect(breaks.getBreakTime()?.diff(moment(), "seconds")).toBe(-3);
+    expect(breaks.getBreakState().breakEndTime).toBe(
+      new Date("2026-08-24T09:02:00Z").getTime() +
+        harness.settings.breakLengthSeconds * 1000,
+    );
+  });
+
+  it("starts a full work interval after an open break ends while locked", async () => {
+    harness.settings.breakFrequencySeconds = 120;
+    const breaks = await import("./breaks.js");
+    breaks.initBreaks(harness.powerMonitor);
+    vi.advanceTimersByTime(1000);
+
+    breaks.startBreakNow();
+    harness.createBreakWindows.mockClear();
+    harness.getSystemIdleState.mockReturnValue("locked");
+    vi.advanceTimersByTime(1000);
+    breaks.endPopupBreak();
+
+    harness.getSystemIdleState.mockReturnValue("active");
+    vi.advanceTimersByTime(1000);
+
+    expect(breaks.isHavingBreak()).toBe(false);
     expect(breaks.getTimeSinceLastCompletedBreak()).toBe(0);
     expect(breaks.getBreakTime()?.diff(moment(), "seconds")).toBe(120);
     expect(harness.createBreakWindows).not.toHaveBeenCalled();

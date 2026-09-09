@@ -32,7 +32,9 @@ let havingBreak = false;
 let postponedCount = 0;
 let idleStart: Date | null = null;
 let lockStart: Date | null = null;
+let systemLocked = false;
 let breakReachedWhileLocked = false;
+let breakEndedWhileLocked = false;
 let lastTick: Date | null = null;
 let startedFromTray = false;
 
@@ -60,8 +62,21 @@ export function getTimeSinceLastCompletedBreak(): number | null {
   return now.diff(lastBreak, "seconds");
 }
 
-export function startBreakTracking(): void {
-  currentBreakStartTime = new Date();
+export function startBreakTracking(startTime = new Date()): void {
+  currentBreakStartTime = startTime;
+}
+
+export function getBreakState(): {
+  havingBreak: boolean;
+  breakEndTime: number | null;
+} {
+  return {
+    havingBreak,
+    breakEndTime:
+      havingBreak && breakTime
+        ? breakTime.valueOf() + getBreakLengthSeconds() * 1000
+        : null,
+  };
 }
 
 export function resetTimeSinceLastBreak(context: string): void {
@@ -185,6 +200,13 @@ export function endPopupBreak(): void {
   havingBreak = false;
   startedFromTray = false;
 
+  if (systemLocked) {
+    breakEndedWhileLocked = true;
+    breakTime = null;
+    buildTray();
+    return;
+  }
+
   // If there's no future break scheduled, create a normal break
   if (!existingBreakTime || existingBreakTime <= now) {
     postponedCount = 0;
@@ -215,7 +237,7 @@ export function postponeBreak(action = "snoozed"): void {
   }
 }
 
-function doBreak(): void {
+function doBreak(startTime = new Date()): void {
   havingBreak = true;
 
   const settings: Settings = getSettings();
@@ -224,9 +246,10 @@ function doBreak(): void {
   if (
     settings.notificationType === NotificationType.Notification ||
     settings.immediatelyStartBreaks ||
-    startedFromTray
+    startedFromTray ||
+    settings.notificationType === NotificationType.Popup
   ) {
-    startBreakTracking();
+    startBreakTracking(startTime);
   }
 
   if (settings.notificationType === NotificationType.Notification) {
@@ -302,6 +325,7 @@ export function checkIdle(): boolean {
   ) as IdleState;
 
   if (state === IdleState.Locked) {
+    systemLocked = true;
     if (!lockStart) {
       lockStart = new Date();
       return false;
@@ -313,6 +337,7 @@ export function checkIdle(): boolean {
     }
   }
 
+  systemLocked = false;
   lockStart = null;
 
   if (!settings.idleResetEnabled) {
@@ -335,6 +360,8 @@ function checkShouldHaveBreak(): boolean {
 }
 
 function checkBreak(): void {
+  if (systemLocked) return;
+
   const now = moment();
 
   if (breakTime !== null && now > breakTime) {
@@ -367,22 +394,33 @@ function tick(): void {
 
     const shouldHaveBreak = checkShouldHaveBreak();
 
-    if (
-      !shouldHaveBreak &&
-      !havingBreak &&
-      lockStart &&
-      breakTime &&
-      now >= breakTime
-    ) {
+    if (!systemLocked && breakEndedWhileLocked) {
+      breakEndedWhileLocked = false;
+      resetTimeSinceLastBreak("Break completed while computer was locked");
+      scheduleNextBreak();
+      return;
+    }
+
+    if (systemLocked && !havingBreak && breakTime && now >= breakTime) {
       breakReachedWhileLocked = true;
+    }
+
+    if (
+      !systemLocked &&
+      breakReachedWhileLocked &&
+      breakTime &&
+      now.diff(breakTime, "milliseconds") >= getBreakLengthSeconds() * 1000
+    ) {
+      breakReachedWhileLocked = false;
       breakTime = null;
-      buildTray();
+      resetTimeSinceLastBreak("Break completed while computer was locked");
+      scheduleNextBreak();
+      return;
     }
 
     if (shouldHaveBreak && breakReachedWhileLocked) {
       breakReachedWhileLocked = false;
-      resetTimeSinceLastBreak("Break reached while computer was locked");
-      scheduleNextBreak();
+      doBreak(breakTime?.toDate());
       return;
     }
 
@@ -423,7 +461,13 @@ function tick(): void {
       scheduleNextBreak();
     }
 
-    if (!shouldHaveBreak && !havingBreak && breakTime) {
+    if (
+      !shouldHaveBreak &&
+      !havingBreak &&
+      breakTime &&
+      !breakReachedWhileLocked &&
+      !systemLocked
+    ) {
       if (checkIdle()) {
         const idleResetSeconds = getIdleResetSeconds();
         // Calculate when idle actually started by subtracting idle duration

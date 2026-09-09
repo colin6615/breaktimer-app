@@ -6,6 +6,7 @@ export enum IpcChannel {
   BreakLengthGet = "BREAK_LENGTH_GET",
   BreakPostpone = "BREAK_POSTPONE",
   BreakStart = "BREAK_START",
+  BreakStateGet = "BREAK_STATE_GET",
   BreakWindowResize = "BREAK_WINDOW_RESIZE",
   BreakTrackingComplete = "BREAK_TRACKING_COMPLETE",
   Error = "ERROR",

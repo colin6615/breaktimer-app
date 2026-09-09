@@ -21,6 +21,9 @@ process.once("loaded", () => {
     invokeGetBreakLength: () => {
       return ipcRenderer.invoke("BREAK_LENGTH_GET");
     },
+    invokeGetBreakState: () => {
+      return ipcRenderer.invoke("BREAK_STATE_GET");
+    },
     invokeGetSettings: () => {
       return ipcRenderer.invoke("SETTINGS_GET");
     },

@@ -6,6 +6,7 @@ import {
   completeBreakTracking,
   getAllowPostpone,
   getBreakLengthSeconds,
+  getBreakState,
   getTimeSinceLastBreak,
   postponeBreak,
   startBreakTracking,
@@ -92,6 +93,11 @@ ipcMain.handle(
 ipcMain.handle(IpcChannel.BreakLengthGet, (): number => {
   log.info(IpcChannel.BreakLengthGet);
   return getBreakLengthSeconds();
+});
+
+ipcMain.handle(IpcChannel.BreakStateGet, () => {
+  log.info(IpcChannel.BreakStateGet);
+  return getBreakState();
 });
 
 ipcMain.handle(
