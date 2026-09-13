@@ -3,6 +3,7 @@
 -  disable smart breaks while unlocked
   - smart breaks still work while locked or sleeping
 - Not sure if you're running this fork or the original app? Check **BreakTimer > About**—my custom build includes my name and repo link.
+- I used ai to code this.
 # How to install this fork
 ```
 # 1. Install Node.js (if not already installed)
