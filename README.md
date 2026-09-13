@@ -1,3 +1,8 @@
+# My tweaks
+- Cancelling breaks used to require just a click. Now it requires the user to type random 40-characters.
+-  disable smart breaks while unlocked
+  - smart breaks still work while locked or sleeping
+
 # BreakTimer App - https://breaktimer.app
 
 ![](https://img.shields.io/github/downloads/tom-james-watson/breaktimer-app/total?logo=github&style=social)
