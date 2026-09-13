@@ -5,15 +5,21 @@
 - Not sure if you're running this fork or the original app? Check **BreakTimer > About**—my custom build includes my name and repo link.
 # How to install this fork
 ```
-# install node if needed
+# 1. Install Node.js (if not already installed)
 brew install node
+
+# 2. Clone and enter the repository
 git clone https://github.com/colin6615/breaktimer-app.git
 cd breaktimer-app
-# The following commands originate from DEVELOPMENT.md
+
+# 3. Install dependencies and package the app
+# note: the following commands originate from DEVELOPMENT.md
 npm i
 npm run package
-# if you want to test/debug the program (instead of packaging the app), then: npm run dev
+
+# Note: To test/debug without packaging, run: npm run dev
 ```
+Move `breaktimer-app/release/mac-arm64` to applications folder
 
 # Original, Breaktimer README (not this fork)
 # BreakTimer App - https://breaktimer.app
