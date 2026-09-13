@@ -177,7 +177,7 @@ export function buildTray(): void {
       title: "About",
       type: "info",
       message: `BreakTimer`,
-      detail: `Build: ${packageJson.version}\n\nWebsite:\nhttps://breaktimer.app\n\nSource Code:\nhttps://github.com/tom-james-watson/breaktimer-app\n\nDistributed under GPL-3.0-or-later license.`,
+      detail: `Build: ${packageJson.version}\nUnofficial fork by colin6615\n\nWebsite:\nhttps://breaktimer.app\n\nSource Code:\nhttps://github.com/colin6615/breaktimer-app\n\nDistributed under GPL-3.0-or-later license.`,
     });
   };
 
