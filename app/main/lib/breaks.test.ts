@@ -94,4 +94,13 @@ describe("system suspension", () => {
 
     expect(breaks.getTimeSinceLastCompletedBreak()).toBe(0);
   });
+
+  it("does not treat an unlocked idle machine as a smart break", async () => {
+    harness.getSystemIdleState.mockReturnValue("idle");
+    const breaks = await import("./breaks.js");
+
+    breaks.initBreaks(harness.powerMonitor);
+
+    expect(breaks.checkIdle()).toBe(false);
+  });
 });
