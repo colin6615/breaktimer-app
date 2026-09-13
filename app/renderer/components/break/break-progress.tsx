@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import moment from "moment";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Settings, SoundType } from "../../../types/settings";
+import { CancelBreakDialog } from "./cancel-break-dialog";
 import { TimeRemaining } from "./utils";
 
 interface BreakProgressProps {
@@ -30,6 +31,7 @@ export function BreakProgress({
     null,
   );
   const [progress, setProgress] = useState<number | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [breakStartTime] = useState(new Date());
   const soundPlayedRef = useRef(false);
   const isClosingRef = useRef(isClosing);
@@ -142,7 +144,7 @@ export function BreakProgress({
         {endBreakEnabled && (
           <Button
             className="!bg-transparent hover:!bg-black/10 active:!bg-black/20 border-white/20"
-            onClick={onEndBreak}
+            onClick={() => setCancelDialogOpen(true)}
             variant="outline"
             style={{
               color: textColor,
@@ -153,6 +155,15 @@ export function BreakProgress({
           </Button>
         )}
       </div>
+
+      <CancelBreakDialog
+        open={cancelDialogOpen && !isClosing}
+        onCancel={() => setCancelDialogOpen(false)}
+        onConfirm={() => {
+          setCancelDialogOpen(false);
+          onEndBreak();
+        }}
+      />
 
       {/* Break message */}
       <div
