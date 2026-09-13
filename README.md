@@ -2,6 +2,7 @@
 - Cancelling breaks used to require just a click. Now it requires the user to type random 40-characters.
 -  disable smart breaks while unlocked
   - smart breaks still work while locked or sleeping
+- Not sure if you're running this fork or the original app? Check **BreakTimer > About**—my custom build includes my name and repo link.
 
 # BreakTimer App - https://breaktimer.app
 
