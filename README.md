@@ -1,9 +1,21 @@
-# My tweaks
+# Differences between this fork and the original app
 - Cancelling breaks used to require just a click. Now it requires the user to type random 40-characters.
 -  disable smart breaks while unlocked
   - smart breaks still work while locked or sleeping
 - Not sure if you're running this fork or the original app? Check **BreakTimer > About**—my custom build includes my name and repo link.
+# How to install this fork
+```
+# install node if needed
+brew install node
+git clone https://github.com/colin6615/breaktimer-app.git
+cd breaktimer-app
+# The following commands originate from DEVELOPMENT.md
+npm i
+npm run package
+# if you want to test/debug the program (instead of packaging the app), then: npm run dev
+```
 
+# Original, Breaktimer README (not this fork)
 # BreakTimer App - https://breaktimer.app
 
 ![](https://img.shields.io/github/downloads/tom-james-watson/breaktimer-app/total?logo=github&style=social)
