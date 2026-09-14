@@ -5,18 +5,18 @@ import {
 } from "./cancel-break-challenge";
 
 describe("cancel break challenge", () => {
-  it("generates a 40-character alphanumeric challenge", () => {
+  it("generates a 48-character alphanumeric challenge", () => {
     const challenge = generateCancelBreakChallenge();
 
-    expect(challenge).toHaveLength(40);
+    expect(challenge).toHaveLength(48);
     expect(challenge).toMatch(/^[A-Za-z0-9]+$/);
   });
 
   it("requires an exact match", () => {
-    const challenge = "A".repeat(40);
+    const challenge = "A".repeat(48);
 
     expect(isCancelBreakChallengeCorrect(challenge, challenge)).toBe(true);
-    expect(isCancelBreakChallengeCorrect(challenge, "a".repeat(40))).toBe(
+    expect(isCancelBreakChallengeCorrect(challenge, "a".repeat(48))).toBe(
       false,
     );
     expect(

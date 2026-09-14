@@ -26,6 +26,16 @@ export default function SmartBreaksCard({
       }}
     >
       <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={settingsDraft.disableSmartBreaksWhileUnlocked}
+            onCheckedChange={(checked) =>
+              onSwitchChange("disableSmartBreaksWhileUnlocked", checked)
+            }
+            disabled={!settingsDraft.idleResetEnabled}
+          />
+          <Label>Disable Smart Breaks while the computer is unlocked</Label>
+        </div>
         <div className="space-y-2">
           <Label className="text-sm font-medium">Minimum idle time</Label>
           <TimeInput

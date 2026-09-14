@@ -95,12 +95,29 @@ describe("system suspension", () => {
     expect(breaks.getTimeSinceLastCompletedBreak()).toBe(0);
   });
 
-  it("does not treat an unlocked idle machine as a smart break", async () => {
+  it("does not treat an unlocked idle machine as a smart break by default", async () => {
     harness.getSystemIdleState.mockReturnValue("idle");
     const breaks = await import("./breaks.js");
 
     breaks.initBreaks(harness.powerMonitor);
 
     expect(breaks.checkIdle()).toBe(false);
+  });
+
+  it("can allow smart breaks while unlocked when the toggle is off", async () => {
+    harness.settings = {
+      ...defaultSettings,
+      breakFrequencySeconds: 60,
+      idleResetEnabled: true,
+      idleResetLengthSeconds: 5,
+      disableSmartBreaksWhileUnlocked: false,
+      workingHoursEnabled: false,
+    };
+    harness.getSystemIdleState.mockReturnValue("idle");
+    const breaks = await import("./breaks.js");
+
+    breaks.initBreaks(harness.powerMonitor);
+
+    expect(breaks.checkIdle()).toBe(true);
   });
 });

@@ -294,6 +294,7 @@ enum IdleState {
 }
 
 export function checkIdle(): boolean {
+  const settings: Settings = getSettings();
   const state: IdleState = powerMonitor.getSystemIdleState(
     getIdleResetSeconds(),
   ) as IdleState;
@@ -311,7 +312,16 @@ export function checkIdle(): boolean {
   }
 
   lockStart = null;
-  return false;
+
+  if (!settings.idleResetEnabled) {
+    return false;
+  }
+
+  if (settings.disableSmartBreaksWhileUnlocked) {
+    return false;
+  }
+
+  return state === IdleState.Idle;
 }
 
 export function isHavingBreak(): boolean {

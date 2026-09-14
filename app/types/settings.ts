@@ -47,6 +47,7 @@ export interface Settings {
   workingHoursSunday: WorkingHours;
   idleResetEnabled: boolean;
   idleResetLengthSeconds: number;
+  disableSmartBreaksWhileUnlocked: boolean;
   idleResetNotification: boolean;
   soundType: SoundType;
   breakSoundVolume: number;
@@ -108,6 +109,7 @@ export const defaultSettings: Settings = {
   },
   idleResetEnabled: true,
   idleResetLengthSeconds: 5 * 60,
+  disableSmartBreaksWhileUnlocked: true,
   idleResetNotification: false,
   soundType: SoundType.Gong,
   breakSoundVolume: 1,
